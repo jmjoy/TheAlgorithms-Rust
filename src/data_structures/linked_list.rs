@@ -51,6 +51,47 @@ impl<T> LinkedList<T> {
         self.length = self.length + 1;
     }
 
+    pub fn remove(&mut self, mut index: i32) -> Option<T> {
+        let mut need_item = match self.start {
+            Some(item) => item,
+            None => return None,
+        };
+
+        unsafe {
+            for _ in 0..index {
+                match (*need_item.as_ptr()).next {
+                    Some(item) => need_item = item,
+                    None => return None,
+                }
+            }
+
+            let prev = (*need_item.as_ptr()).prev;
+            let next = (*need_item.as_ptr()).next;
+            match (prev, next) {
+                (Some(prev), Some(next)) => {
+                    (*prev.as_ptr()).next = Some(next);
+                    (*next.as_ptr()).prev = Some(prev);
+                }
+                (Some(prev), None) => {
+                    (*prev.as_ptr()).next = None;
+                    self.end = Some(prev);
+                }
+                (None, Some(next)) => {
+                    (*next.as_ptr()).prev = None;
+                    self.start = Some(next);
+                }
+                (None, None) => {
+                    self.start = None;
+                    self.end = None;
+                }
+            }
+
+            self.length -= 1;
+
+            Some(Box::from_raw(need_item.as_ptr()).val)
+        }
+    }
+
     pub fn get<'a>(&'a mut self, index: i32) -> Option<&'a T> {
         return self.get_ith_node(self.start, index);
     }
